@@ -1,0 +1,77 @@
+<head>
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<style type="text/css">
+		.y-axis line{
+	      stroke: black;
+	    }
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		const margin = {top:40, right:50, bottom:60, left:50}
+		const width = 1000 - margin.left - margin.right,
+			  height = 1000 - margin.top - margin.bottom
+
+		const svg = d3.select('body').append('svg')
+				.attr('width', width + margin.left + margin.right)
+				.attr('height', height + margin.top + margin.bottom)
+			.append('g')
+				.attr('transform', 'translate('+margin.left+','+margin.top+')')
+
+		function convert(d) {
+			d.net = +d.net
+			return d
+		}
+
+		d3.csv('miniproject1.csv', convert).then(function(data) {	
+			data.sort((x,y) => d3.ascending(x.net, y.net))
+
+			const x = d3.scaleLinear()
+				.range([0, width])
+				.domain(d3.extent(data, d => d.net))
+			const y = d3.scaleBand()
+				.range([0, height])
+				.domain(data.map(d => d.country))
+				.padding(.1)
+			const color = d3.scaleSequential(d3.interpolateRdBu)
+				.domain(d3.extent(data, d => d.net))
+
+			const xAxis = svg.append('g')
+				.attr('class', 'x-axis')
+				.attr('transform', 'translate(0,'+(height+10)+')')
+				.call(d3.axisBottom(x).tickFormat(d => d/1000000000 + 'B').tickSizeOuter(0))
+
+			const yAxis = svg.append('g')
+				.attr('class', 'y-axis')
+				.append('line')
+					.attr('y1', 0)
+					.attr('y2', height)
+					.attr('x1', x(0))
+					.attr('x2', x(0))
+
+			const bars = svg.append('g').attr('class', 'bars')
+			bars.selectAll('rect')
+				.data(data)
+				.enter().append('rect')
+				.attr('class', 'net')
+				.attr('x', d => x(Math.min(0, d.net)))
+				.attr('y', d => y(d.country))
+				.attr('height', y.bandwidth())
+				.attr('width', d => Math.abs(x(d.net) - x(0)))
+				.style('fill', d => color(d.net))
+
+			const labels = svg.append('g').attr('class', 'labels')
+			labels.selectAll('text')
+				.data(data)
+				.enter().append('text')
+				.attr('class', 'bar-label')
+				.attr('x', x(0))
+				.attr('y', d => y(d.country))
+				.attr('dx', d => d.net < 0 ? 5 : -5)
+				.attr('dy', y.bandwidth())
+				.attr('text-anchor', d => d.net < 0 ? 'start' : 'end')
+				.text(d => d.country)
+
+		})
+	</script>
+</body>

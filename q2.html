@@ -1,0 +1,66 @@
+<head>
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<style type="text/css">
+		.y-axis line{
+	      stroke: black;
+	    }
+	</style>
+</head>
+<body>
+	<script type="text/javascript">
+		const margin = {top:40, right:50, bottom:60, left:50}
+		const width = 2000 - margin.left - margin.right,
+			  height = 1000 - margin.top - margin.bottom
+
+		const svg = d3.select('body').append('svg')
+				.attr('width', width + margin.left + margin.right)
+				.attr('height', height + margin.top + margin.bottom)
+			.append('g')
+				.attr('transform', 'translate('+margin.left+','+margin.top+')')
+
+		function convert(d) {
+			d.net = +d.net
+			return d
+		}
+
+		const projection = d3.geoMercator()
+			.translate([width/2, height/2])
+			.scale([500])
+		const path = d3.geoPath().projection(projection)
+
+		d3.json('countries.geojson').then(function(countryData) {
+			const countries = svg.append('g').attr('class', 'countries')
+			countries.selectAll('path')
+				.data(countryData.features)
+				.enter()
+				.append('path')
+				.attr('d', path)
+				.style('fill', 'gray')
+
+			countries.selectAll('circle')
+				.data(countryData.features)
+				.enter()
+				.append('circle')
+				.attr('r', 5)
+				.attr('transform', d => 'translate('+projection(d3.geoCentroid(d))+')')
+				.style('fill', 'blue')
+
+			console.log(countryData.features)
+
+			d3.csv('miniproject1.csv', convert).then(function(data) {
+				const dots = svg.append('g').attr('class', 'dots')
+				dots.selectAll('circle')
+					.data(data)
+					.enter()
+					.append('circle')
+						// .attr('cx', (d,i) => projection([26,28])[0])
+						// .attr('cy', projection([26,-28])[1])
+						.attr('r', 20)
+						.style('fill', 'red')
+
+			})
+		})
+
+		
+	</script>
+</body>
